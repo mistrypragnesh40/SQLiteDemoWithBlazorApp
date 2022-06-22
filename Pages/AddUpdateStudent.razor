@@ -1,0 +1,116 @@
+﻿@page "/add_student"
+@page "/update_student/{StudentID:int}"
+
+
+@using SQLiteDemoWithBlazorApp.Services
+@inject IStudentService StudentService
+<h3>AddUpdateStudent</h3>
+
+<div class="form-group">
+    <label>First Name</label>
+    <input @bind="firstName" class="form-control" placeholder="First Name">
+</div>
+<div class="mt-2 form-group">
+    <label>Last Name</label>
+    <input @bind="lastName" class="form-control" placeholder="Last Name">
+</div>
+
+
+<div class="mt-2 form-group">
+    <label>Email address</label>
+    <input @bind="email" type="email" class="form-control" placeholder="Email">
+</div>
+
+<div class="mt-2 form-group">
+    <label>Gender</label>
+    <div class=" d-flex flex-row">
+        <div class="col-6 d-flex justify-content-between">
+            <div class="form-check">
+                <input checked="@(gender=="Male")" @onchange="@(()=> setGender("Male"))" class="form-check-input" type="radio" name="flexRadioDefault">
+                <label class="form-check-label" for="flexRadioDefault1">
+                    Male
+                </label>
+            </div>
+            <div class="form-check">
+                <input checked="@(gender=="Female")" @onchange="@(()=> setGender("Female"))" class="form-check-input" type="radio" name="flexRadioDefault">
+                <label class="form-check-label" for="flexRadioDefault2">
+                    Female
+                </label>
+            </div>
+        </div>
+    </div>
+</div>
+
+<button type="submit" @onclick="AddStudentRecord" class="mt-2 btn btn-primary">Submit</button>
+
+
+@code {
+
+    [Parameter]
+    public int StudentID { get; set; }
+
+    private string firstName;
+    private string lastName;
+    private string email;
+    private string gender;
+
+    private void setGender(string gender)
+    {
+        this.gender = gender;
+    }
+
+    protected async override Task OnInitializedAsync()
+    {
+        if (StudentID > 0)
+        {
+            var response = await StudentService.GetStudentByID(StudentID);
+            if (response != null)
+            {
+                firstName = response.FirstName;
+                lastName = response.LastName;
+                email = response.Email;
+                gender = response.Gender;
+            }
+        }
+    }
+
+
+    private async void AddStudentRecord()
+    {
+        var studentModel = new Models.StudentModel
+        {
+           FirstName = firstName,
+           LastName = lastName,
+           Email = email,
+           Gender = gender,
+           StudentID = StudentID
+        };
+
+        int response = -1;
+        if (StudentID > 0)
+        {
+            response = await StudentService.UpdateStudent(studentModel);
+            //update record
+        }
+        else
+        {
+            response = await StudentService.AddStudent(studentModel);
+            //add record
+        }
+
+
+        if (response > 0)
+        {
+            firstName = lastName = gender = email = string.Empty;
+            this.StateHasChanged();
+            await App.Current.MainPage.DisplayAlert("Record Saved",
+            "Record Saved To Student Table", "OK");
+        }
+        else
+        {
+            await App.Current.MainPage.DisplayAlert("Oops",
+           "Something went wrong while adding record", "OK");
+        }
+
+    }
+}

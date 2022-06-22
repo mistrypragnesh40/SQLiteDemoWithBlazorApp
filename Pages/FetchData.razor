@@ -1,0 +1,72 @@
+﻿@page "/fetchdata"
+
+@using SQLiteDemoWithBlazorApp.Data
+@using SQLiteDemoWithBlazorApp.Models
+@using SQLiteDemoWithBlazorApp.Services
+@inject IStudentService StudentService
+@inject NavigationManager NavManager
+<h1>Student List</h1>
+
+<p>This component demonstrates fetching data from a service.</p>
+
+@if (students == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>First Name</th>
+                    <th>Last Name</th>
+                    <th>Gender</th>
+                    <th>Email</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var student in students)
+                {
+                    <tr>
+                        <td>@student.FirstName</td>
+                        <td>@student.LastName</td>
+                        <td>@student.Gender</td>
+                        <td>@student.Email</td>
+                        <td>
+                            <button type="submit" @onclick="@(()=> EditStudent(student.StudentID))" class="btn btn-primary">Edit</button>
+                        </td>
+                        <td>
+                            <button type="submit" @onclick="@(()=> DeleteStudent(student))" class="btn btn-primary">Delete</button>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+}
+
+@code {
+    private List<StudentModel> students;
+
+    protected override async Task OnInitializedAsync()
+    {
+        students = await StudentService.GetAllStudent();
+    }
+
+    private void EditStudent(int studentID)
+    {
+        NavManager.NavigateTo($"update_student/{studentID}");
+    }
+
+    private async void DeleteStudent(StudentModel student)
+    {
+        var response = await StudentService.DeleteStudent(student);
+        if (response > 0)
+        {
+            await OnInitializedAsync();
+            this.StateHasChanged();
+        }
+    }
+}
